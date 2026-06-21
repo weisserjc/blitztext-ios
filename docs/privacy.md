@@ -1,45 +1,36 @@
 # Privacy Notes
 
-Blitztext does not include a hosted backend.
+Blitztext iOS does not include a hosted backend.
 
-When you use the online workflows, your Mac or iPhone sends data directly to OpenAI:
+When you use the app, your iPhone or iPad sends data directly to OpenAI:
 
 - audio recordings for transcription
-- transcribed or typed text for rewriting
-- custom terms and prompt context if you configured them
-
-When **Sicherer Lokaler Modus** is enabled and a WhisperKit/CoreML model is installed, transcription runs on your Mac and does not send audio to OpenAI. Rewriting workflows still require OpenAI and are paused while secure local mode is active.
+- transcribed text for the optional improvement/cleanup step
+- custom terms and language hints if configured
 
 You are responsible for your OpenAI account, API usage, costs, and data handling.
 
 ## Local Data
 
-The macOS app stores:
-
-- your OpenAI API key in the user's macOS Keychain
-- workflow settings in local app support storage
-- optional WhisperKit/CoreML model folders in local app support storage
-- temporary audio files while a transcription is being processed; the app attempts to delete each recording when the workflow ends or is cancelled
-
-Workflow output may also be placed on your clipboard so it can be pasted into another app. Auto-paste marks the clipboard entry as concealed for compatible clipboard managers, but the generated text intentionally remains on the clipboard as a fallback if automatic paste is blocked. Clipboard managers, macOS, or other apps may still observe clipboard contents while they are present.
-
-The app uses the system TLS trust store for OpenAI and Hugging Face requests. It does not currently pin certificates. A user-installed or managed root certificate can therefore affect HTTPS trust decisions on that Mac.
-
-Settings such as custom prompts, custom terms, and context are stored in local app support storage as plain JSON. Do not put secrets into those fields.
-
 The iOS app stores:
 
 - your OpenAI API key in the iOS Keychain
-- the latest pending keyboard transcript in the shared keychain so the keyboard extension can insert it
-- language, mode, and custom terms in local user defaults or shared keychain state
-- temporary audio files while a transcription is being processed; the app attempts to delete each recording after processing
+- the latest pending keyboard transcript in the shared keychain so the keyboard extension
+  can insert it
+- mode state, language, and custom terms in local user defaults or shared keychain state
+- temporary audio files while a transcription is being processed; the app attempts to
+  delete each recording after processing
 
-The iOS keyboard intentionally reads prepared transcript text from the shared keychain rather than reading the clipboard, to avoid repeated iOS paste permission prompts.
+The iOS keyboard intentionally reads prepared transcript text from the shared keychain
+rather than reading the clipboard. This avoids repeated iOS paste permission prompts and
+avoids accidentally pulling content from Universal Clipboard.
 
 ## Offline Scope
 
-Only transcription can run locally. Any workflow that rewrites, improves, or transforms text still uses OpenAI.
+This iOS preview currently uses OpenAI for transcription. It is not an offline dictation
+app. The **Verbessert** mode also sends the transcript to OpenAI for rewriting.
 
 ## Sensitive Content
 
-Do not use this preview with confidential, regulated, or highly sensitive content unless you have reviewed the code, your OpenAI settings, and your legal/privacy requirements.
+Do not use this preview with confidential, regulated, or highly sensitive content unless
+you have reviewed the code, your OpenAI settings, and your legal/privacy requirements.

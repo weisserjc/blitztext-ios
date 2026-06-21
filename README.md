@@ -1,90 +1,71 @@
-# Blitztext App
+# Blitztext iOS
 
-Blitztext App is an experimental open-source macOS menubar app for turning speech into text.
+Blitztext iOS is an experimental open-source iPhone/iPad dictation app with a custom
+iOS keyboard. It lets you start Whisper-style speech-to-text from a text field, record in
+the Blitztext app, and insert the finished text back through the keyboard.
 
-It is intentionally small and unfinished. The goal is to make a real workflow visible and hackable: press a hotkey, speak, get text back, optionally rewrite it, and paste it into the app you were using.
+This repository is an iOS-focused fork of
+[cmagnussen/blitztext-app](https://github.com/cmagnussen/blitztext-app). The original
+project is a macOS menubar speech-to-text preview. This fork keeps the idea, license, and
+spirit, but removes the macOS app code so the repository focuses only on the iOS
+experiment.
 
-This is a learning and experimentation project, not a polished product.
-
-> Preview status: bring your own OpenAI API key, no hosted backend, no warranty, no support guarantee.
+> Preview status: bring your own OpenAI API key, no hosted backend, no App Store release,
+> no warranty, no support guarantee.
 
 ## What It Does
 
-- **Blitztext**: record speech and transcribe it.
-- **Blitztext+**: record speech, transcribe it, then turn the rough draft into cleaner writing.
-- **Blitztext $%&!**: turn frustrated speech into a calmer message.
-- **Blitztext :)**: add fitting emojis to dictated text.
-
-## About This Fork
-
-This fork keeps the original macOS idea and adds an experimental iOS app plus a custom
-Blitztext keyboard. The iOS goal is simple: use Whisper-quality dictation from any text
-field on iPhone or iPad without a hosted Blitztext backend.
-
-The iOS implementation is split into:
-
-- **BlitztextiOS**: the container app that stores the OpenAI API key, records audio, transcribes with Whisper, and can improve the text with an LLM step.
-- **BlitztextKeyboard**: the custom keyboard extension that starts the dictation flow and inserts the finished text into the active text field.
-- **BlitztextShared**: shared keychain, audio, OpenAI, and state helpers used by app and keyboard.
-
-The iOS app currently supports two dictation modes:
-
+- **Blitztext keyboard**: start dictation from any iOS text field through a custom keyboard.
+- **Blitztext app**: records audio, sends it to OpenAI Whisper, and stores the result for
+  the keyboard.
 - **Wörtlich**: direct 1:1 transcription.
 - **Verbessert**: transcription plus cleanup/shortening while preserving the meaning.
+- **Shared keychain handoff**: app and keyboard exchange prepared text without reading the
+  clipboard, avoiding recurring iOS paste permission prompts.
 
-Like the macOS preview, the iOS fork is **bring your own OpenAI API key**. There is no
-hosted Blitztext backend. Audio and text are sent directly from the app to OpenAI for
-online transcription and improvement.
+## Why It Is Split Into App + Keyboard
 
-## Important Preview Notes
+iOS custom keyboard extensions do not reliably get microphone input on real devices. The
+keyboard therefore cannot do the recording itself.
 
-- The original app is macOS-focused; this fork additionally includes experimental iOS targets.
-- Bring your own OpenAI API key.
-- No hosted Blitztext backend is included or provided.
-- In online mode, audio and text are sent directly from the app to the OpenAI API.
-- Optional local transcription via WhisperKit/CoreML if you install a compatible model locally.
-- `./build.sh` creates a locally ad-hoc-signed development app. No notarized release binary is provided.
-- Not production ready.
-- No warranty and no support guarantee.
+The current workflow is:
 
-You are welcome to use, fork, adapt, and share this project under the license terms.
+1. Open any app with a text field.
+2. Switch to the Blitztext keyboard.
+3. Tap **Diktieren**.
+4. The keyboard opens the Blitztext app and requests an immediate recording.
+5. Stop the recording in Blitztext.
+6. Blitztext transcribes the audio and stores the text in the shared keychain.
+7. Use the iOS **"‹ Back"** chip to return to the original app.
+8. The keyboard sees the prepared text and inserts it into the active text field.
 
-The intent is not to ship a one-click finished app. The intent is to make a real AI workflow understandable: clone it, build it, read the code, change it, break it, fix it, and suggest improvements. If you only want to download something and never look inside, this preview will probably feel rough. If you want to learn how a small native macOS AI app is put together, you are in the right place.
+There is currently no public iOS API that reliably lets Blitztext automatically return to
+an arbitrary previous app. The system back chip is the deliberate fallback.
 
-## Screenshots
+## Project Structure
 
-<table>
-  <tr>
-    <td><img src="docs/screenshots/online-mode.png" alt="Blitztext online transcription mode" width="420"></td>
-    <td><img src="docs/screenshots/local-mode.png" alt="Blitztext secure local transcription mode" width="420"></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/local-model-picker.png" alt="Blitztext local model picker" width="420"></td>
-    <td><img src="docs/screenshots/settings-customize.png" alt="Blitztext settings and customization view" width="420"></td>
-  </tr>
-</table>
+```text
+BlitztextiOS/
+  App/          iOS container app, recording screen, settings
+  Resources/    iOS app Info.plist and entitlements
+BlitztextKeyboard/
+  Resources/    keyboard extension Info.plist and entitlements
+  *.swift       custom keyboard UI and text insertion
+BlitztextShared/
+  *.swift       OpenAI, audio, keychain, and shared state helpers
+project.yml     XcodeGen project definition for the iOS app + keyboard extension
+build.sh        helper script for local iOS builds
+docs/           setup, privacy, and implementation notes
+```
 
 ## Requirements
 
-- macOS 14 or newer
-- Xcode 16 or newer (Swift 5.10), with Command Line Tools installed and selected for `xcodebuild`
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate the Xcode project
-- For online transcription and rewriting: an OpenAI API key with access to:
-  - `whisper-1` for transcription
-  - `gpt-4o-mini` and optionally `gpt-4o` for rewriting
-- For local-only transcription: a WhisperKit CoreML model in:
-  `~/Library/Application Support/Blitztext/models/whisperkit/`
-
-The build also pulls one Swift Package dependency automatically:
-
-- [`argmax-oss-swift`](https://github.com/argmaxinc/argmax-oss-swift) (WhisperKit) — used for local on-device transcription.
-
-Additional requirements for the iOS fork:
-
-- A real iPhone or iPad for device testing.
-- Xcode with a development team configured for local signing.
-- Full Access enabled for the Blitztext keyboard in iOS Settings.
-- An OpenAI API key for transcription and rewriting.
+- macOS with Xcode installed
+- XcodeGen
+- A real iPhone or iPad for testing
+- An Apple development team for local device signing
+- Full Access enabled for the Blitztext keyboard in iOS Settings
+- Your own OpenAI API key
 
 Install XcodeGen if needed:
 
@@ -92,104 +73,57 @@ Install XcodeGen if needed:
 brew install xcodegen
 ```
 
-## Build And Run
+## Build
+
+Generate the Xcode project:
 
 ```bash
-git clone https://github.com/weisserjc/blitztext-app.git
-cd blitztext-app
-./build.sh --run
+xcodegen generate
 ```
 
-For a local install into `/Applications`:
+Open `BlitztextiOS.xcodeproj`, select the `BlitztextiOS` scheme, set your signing team,
+and build to a connected device.
+
+You can also use the helper script:
 
 ```bash
-./build.sh --install --run
+./build.sh --device <DEVICE_ID> --team <TEAM_ID>
 ```
 
-The generated `.app` is ad-hoc signed for local development only. Do not treat it as a trusted redistributable binary. A public binary release would need Developer ID signing and notarization.
+The bundle identifiers and keychain access group in this preview currently reflect the
+maintainer's local development setup. If you fork this repository, replace:
 
-On first launch, either paste your own OpenAI API key for online workflows or install a WhisperKit CoreML model for local transcription. Rewriting workflows still require OpenAI.
+- `de.johannesweisser.blitztext.ios`
+- `de.johannesweisser.blitztext.ios.keyboard`
+- `43AUMU7SS5.de.johannesweisser.blitztext.shared`
 
-For fully local transcription, install a WhisperKit CoreML model and enable **Sicherer Lokaler Modus** in the app.
+with your own app identifiers, Apple Team ID, and matching keychain access group.
 
-For a slower, more explicit walkthrough, see [docs/setup.md](docs/setup.md).
-
-For iOS build and install notes, see [README-iOS.md](README-iOS.md) and
+More details live in [docs/setup.md](docs/setup.md) and
 [docs/ios-keyboard-mvp.md](docs/ios-keyboard-mvp.md).
-
-## Permissions
-
-Blitztext asks for:
-
-- **Microphone**: to record your voice.
-- **Accessibility**: to paste the result back into the app you were using.
-
-If you do not grant Accessibility permission, you can still copy results manually.
-
-Full Disk Access is not required. If auto-paste does not work even though transcription succeeds, open **System Settings -> Privacy & Security -> Accessibility**, enable Blitztext there, restart Blitztext, and try again with the cursor focused in a text field. If macOS shows multiple Blitztext entries, remove or disable the old ones and grant the permission to the app you just built or installed.
 
 ## Data Flow
 
-The preview has no custom backend.
+There is no hosted Blitztext backend.
 
 ```text
-Online transcription: Your Mac -> OpenAI Audio Transcriptions API
-Text rewriting:       Your Mac -> OpenAI Chat Completions API
-Local transcription:  Your Mac -> WhisperKit/CoreML on device
+Audio transcription: iPhone/iPad -> OpenAI Audio Transcriptions API
+Text improvement:    iPhone/iPad -> OpenAI Chat Completions API
+Keyboard handoff:    Blitztext app -> shared iOS keychain -> Blitztext keyboard
 ```
-
-The app stores your OpenAI API key in the user's macOS Keychain.
 
 Read [docs/privacy.md](docs/privacy.md) before using the preview with sensitive content.
 
-## Project Structure
-
-```text
-BlitztextMac/
-  App/          App lifecycle and paste handling
-  Features/     Workflows, menu bar UI, settings
-  Services/     Recording, OpenAI calls, hotkeys, local storage
-  Views/        Shared SwiftUI views
-BlitztextiOS/
-  App/          iOS container app, recording screen, settings
-BlitztextKeyboard/
-  Resources/    iOS keyboard extension metadata
-  *.swift       Custom keyboard UI and text insertion
-BlitztextShared/
-  *.swift       Shared OpenAI, audio, keychain, and state helpers
-build.sh        Local build script
-docs/           Setup, privacy, roadmap, preflight, landing page notes
-```
-
-## Local Models
-
-Local transcription is available as an experimental WhisperKit/CoreML path. The app does not bundle a model; choose one in the app, click install, and then switch on **Sicherer Lokaler Modus** from the menu bar or settings.
-
-See [docs/local-models.md](docs/local-models.md).
-
 ## Contributing
 
-Contributions are welcome, especially if they make the preview easier to build, understand, or fork.
+Contributions are welcome if they make the iOS preview easier to build, understand, or
+fork. Please read [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
-
-## Support And Roadmap
-
-This preview has no formal support promise. See [SUPPORT.md](SUPPORT.md) for how to ask for help without sharing secrets.
-
-The current direction is documented in [ROADMAP.md](ROADMAP.md). Maintainer-facing release checks live in [docs/open-source-preflight.md](docs/open-source-preflight.md).
-
-## License
+## License And Attribution
 
 Code is released under the MIT License. See [LICENSE](LICENSE).
 
-Project names, logos, and app icons are not automatically granted as trademarks or brand assets. See [TRADEMARKS.md](TRADEMARKS.md).
-
-## Legal / Impressum & Datenschutz
-
-This is an experimental, non-commercial open-source project, provided as-is under the MIT License without warranty or support. Nothing is sold here and no installation or operation is performed on your behalf.
-
-The companion website (blitztext.de) is operated by Blackboat Internet GmbH:
-
-- Impressum: https://www.blackboat.com/impressum
-- Datenschutz / Privacy: https://www.blackboat.com/datenschutz
+This repository is a fork of
+[cmagnussen/blitztext-app](https://github.com/cmagnussen/blitztext-app). Project names,
+logos, and app icons are not automatically granted as trademarks or brand assets. See
+[TRADEMARKS.md](TRADEMARKS.md).

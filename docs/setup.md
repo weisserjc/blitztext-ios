@@ -1,80 +1,77 @@
 # Setup
 
-This guide is for people who want to build and inspect the preview themselves.
+This guide is for people who want to build and inspect the iOS preview themselves.
 
-## 1. Requirements
+## Requirements
 
-- macOS 14 or newer
-- Full Xcode, with Command Line Tools installed
+- macOS with full Xcode installed
+- Xcode Command Line Tools selected
 - XcodeGen
-- Homebrew, if you want to install XcodeGen with `brew install xcodegen`
-- Optional for online workflows: an OpenAI API key
-- Optional for secure local transcription: a local WhisperKit/CoreML model
+- A real iPhone or iPad
+- An Apple development team for local device signing
+- Your own OpenAI API key
 
-Install XcodeGen manually if needed:
+Install XcodeGen if needed:
 
 ```bash
 brew install xcodegen
 ```
 
-## 2. Clone And Build
+## Clone
 
 ```bash
 git clone https://github.com/weisserjc/blitztext-app.git
 cd blitztext-app
-./build.sh --debug
 ```
 
-To launch after building:
+## Configure Identifiers
+
+Before building your own fork, replace the maintainer-local identifiers in `project.yml`,
+the iOS entitlements, and `BlitztextShared/BlitztextKeychain.swift`:
+
+- app bundle identifier
+- keyboard extension bundle identifier
+- Apple Team ID
+- shared keychain access group
+
+The app and keyboard must use the same keychain access group, otherwise they cannot share
+API keys, mode state, or pending transcripts.
+
+## Build With Xcode
 
 ```bash
-./build.sh --run
+xcodegen generate
+open BlitztextiOS.xcodeproj
 ```
 
-## 3. Configure OpenAI For Online Workflows
+Then select the `BlitztextiOS` scheme, choose your connected device, configure signing,
+and run.
 
-Open the app settings and paste your own OpenAI API key if you want online transcription or rewriting workflows.
+## Build From Terminal
 
-The preview currently uses:
-
-- `whisper-1` for transcription
-- `gpt-4o-mini` for lightweight rewriting
-- `gpt-4o` for the calmer-message workflow
-
-You are responsible for API access, billing, and data handling in your own OpenAI account.
-
-Never commit your API key into this repository, issues, logs, or screenshots.
-
-You can skip this step if you only want to test local transcription with a local WhisperKit model.
-
-## 4. Optional Local Transcription
-
-To use secure local transcription, choose a compatible WhisperKit CoreML model in the app and click **Installieren**. Blitztext stores models in:
-
-```text
-~/Library/Application Support/Blitztext/models/whisperkit/
+```bash
+./build.sh --device <DEVICE_ID> --team <TEAM_ID> --install
 ```
 
-Recommended first model: `openai_whisper-small_216MB`.
+You can list connected devices with:
 
-See [local-models.md](local-models.md) for the exact command, model links, and expected folder layout.
+```bash
+xcrun devicectl list devices
+```
 
-## 5. macOS Permissions
+## iPhone Setup
 
-The app needs Microphone permission to record audio.
-
-For automatic paste into the previous app, grant Accessibility permission in macOS System Settings. Without it, you can still copy and paste manually.
-
-Blitztext does not need Full Disk Access. Auto-paste uses the Accessibility permission because the app simulates Cmd+V after putting the result on the clipboard.
+1. Open Blitztext.
+2. Store your OpenAI API key in the Settings tab.
+3. Enable the Blitztext keyboard in iOS Settings.
+4. Allow **Full Access** for the Blitztext keyboard.
+5. In any app, switch to the Blitztext keyboard and tap **Diktieren**.
 
 ## Troubleshooting
 
-- If `xcodebuild` reports that the active developer directory is only Command Line Tools, run `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
-- If the build cannot find XcodeGen, install it explicitly with `brew install xcodegen`.
-- If online transcription fails immediately, check whether the API key is present and valid.
-- If secure local mode is disabled, check whether a WhisperKit model is installed in the expected folder.
-- If transcription works but paste does not, this is not an OpenAI billing issue. Check **Privacy & Security -> Accessibility**, restart Blitztext after changing the permission, and make sure the cursor is focused in a text field before starting the workflow.
-- If macOS shows multiple Blitztext entries under Accessibility, remove or disable stale entries, run the app from the final location (`/Applications` if you used `./build.sh --install`), then grant the permission again.
-- If the target app blocks synthetic paste or the target app was not detected, the result still stays on the clipboard so you can press Cmd+V manually.
-- If audio is missing, check Microphone permission and macOS input settings.
-- If you see OpenAI errors, verify model access and account billing.
+- If the app cannot record, check iOS microphone permission for Blitztext.
+- If the keyboard cannot start the app or insert text, check that Full Access is enabled.
+- If transcription fails, verify the OpenAI API key and billing status.
+- If app and keyboard do not share state, check the keychain access group and entitlements.
+- A real device is required for meaningful testing; simulator behavior is not enough for
+  the keyboard/audio limitations.

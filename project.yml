@@ -1,0 +1,60 @@
+name: BlitztextiOS
+options:
+  bundleIdPrefix: de.johannesweisser.blitztext
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    ONLY_ACTIVE_ARCH: NO
+    MARKETING_VERSION: "1.5"
+    CURRENT_PROJECT_VERSION: "15"
+
+targets:
+  BlitztextiOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: BlitztextiOS/App
+      - path: BlitztextShared
+      - path: BlitztextiOS/Resources
+        buildPhase: resources
+        excludes:
+          - Info.plist
+          - BlitztextiOS.entitlements
+    settings:
+      base:
+        DEVELOPMENT_TEAM: 43AUMU7SS5
+        PRODUCT_BUNDLE_IDENTIFIER: de.johannesweisser.blitztext.ios
+        PRODUCT_NAME: Blitztext
+        INFOPLIST_FILE: BlitztextiOS/Resources/Info.plist
+        INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
+        INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CODE_SIGN_ENTITLEMENTS: BlitztextiOS/Resources/BlitztextiOS.entitlements
+    dependencies:
+      - target: BlitztextKeyboard
+        embed: true
+
+  BlitztextKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: BlitztextKeyboard
+        excludes:
+          - Resources/Info.plist
+          - Resources/BlitztextKeyboard.entitlements
+      - path: BlitztextShared
+    settings:
+      base:
+        DEVELOPMENT_TEAM: 43AUMU7SS5
+        PRODUCT_BUNDLE_IDENTIFIER: de.johannesweisser.blitztext.ios.keyboard
+        PRODUCT_NAME: BlitztextKeyboard
+        INFOPLIST_FILE: BlitztextKeyboard/Resources/Info.plist
+        INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
+        INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CODE_SIGN_ENTITLEMENTS: BlitztextKeyboard/Resources/BlitztextKeyboard.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES

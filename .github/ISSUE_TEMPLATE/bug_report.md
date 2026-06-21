@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report something broken in the macOS preview
+about: Report something broken in the iOS preview
 title: ""
 labels: bug
 assignees: ""
@@ -20,10 +20,11 @@ assignees: ""
 
 ## Environment
 
-- macOS version:
-- Mac model/chip:
+- iOS version:
+- Device model:
 - Xcode version:
 - Did this happen before or after entering an OpenAI API key?:
+- Was Full Access enabled for the Blitztext keyboard?:
 
 ## Notes
 

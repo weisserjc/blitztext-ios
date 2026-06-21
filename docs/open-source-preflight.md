@@ -4,9 +4,12 @@ Use this checklist before making the repository public.
 
 ## P0 Before Public
 
-- Run a local build with `./build.sh --debug`.
+- Run `xcodegen generate`.
+- Run a simulator compile with:
+  `xcodebuild -project BlitztextiOS.xcodeproj -scheme BlitztextiOS -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build`.
+- For a real-device check, run `./build.sh --device <DEVICE_ID> --team <TEAM_ID> --install`.
 - Run a secret scan across the working tree and commit history.
-- Confirm there are no private URLs, hosted backend credentials, internal docs, or old project references.
+- Confirm there are no private URLs, hosted backend credentials, internal docs, or old macOS app files.
 - Keep the repository private until another maintainer has reviewed the first public commit.
 - Confirm the root `LICENSE`, `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, and `SUPPORT.md` are present.
 - Make the preview status explicit: experimental, bring your own OpenAI API key, no hosted backend, no warranty.
@@ -19,13 +22,13 @@ Use this checklist before making the repository public.
 
 - Enable private vulnerability reporting.
 - Decide whether Issues alone are enough or whether Discussions should be enabled for questions.
-- Add repository topics such as `macos`, `swift`, `menubar`, `speech-to-text`, and `openai`.
-- Add a lightweight release process only after the build is signed and notarized.
-- Add basic tests once provider boundaries are extracted.
+- Add repository topics such as `ios`, `swift`, `keyboard-extension`, `speech-to-text`, `openai`, and `whisper`.
+- Add a lightweight TestFlight process only after signing is stable.
+- Add focused tests for provider boundaries and shared storage behavior.
 
 ## P2 Later
 
 - Add CODEOWNERS if multiple maintainers become active.
-- Add local model cleanup after the in-app download/install flow.
+- Research whether any recording flow can reduce the app switch friction without violating iOS keyboard extension limits.
 - Consider CodeQL once the repo has enough surface area to justify scheduled scans.
-- Add signed and notarized release artifacts for non-developer testers.
+- Add App Store or TestFlight distribution only after privacy wording, review notes, and signing are ready.

@@ -1,194 +1,106 @@
 #!/bin/bash
 set -euo pipefail
 
-# Blitztext macOS App - Build & Run
-# Voraussetzungen: Full Xcode with Command Line Tools, xcodegen
+# Blitztext iOS - local build helper
+# Requirements: Xcode, XcodeGen, an Apple development team for device builds.
 
-RUN_AFTER=false
+BUILD_CONFIGURATION="Debug"
+DEVICE_ID=""
+TEAM_ID=""
 INSTALL_APP=false
-BUILD_CONFIGURATION="Release"
-UNIVERSAL_ARCHS="arm64 x86_64"
 
-for arg in "$@"; do
-    case "$arg" in
-        --debug)
-            BUILD_CONFIGURATION="Debug"
+usage() {
+    cat <<USAGE
+Usage:
+  ./build.sh --device <DEVICE_ID> --team <TEAM_ID> [--release] [--install]
+
+Options:
+  --device <id>   iPhone/iPad device identifier for xcodebuild destination
+  --team <id>     Apple Developer Team ID used for signing
+  --release       Build Release instead of Debug
+  --install       Install the built app to the device with xcrun devicectl
+
+For a compile-only simulator check, use:
+  xcodegen generate
+  xcodebuild -project BlitztextiOS.xcodeproj -scheme BlitztextiOS \\
+    -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --device)
+            DEVICE_ID="${2:-}"
+            shift 2
             ;;
-        --run)
-            RUN_AFTER=true
+        --team)
+            TEAM_ID="${2:-}"
+            shift 2
             ;;
         --install)
             INSTALL_APP=true
+            shift
             ;;
         --release)
             BUILD_CONFIGURATION="Release"
+            shift
+            ;;
+        --debug)
+            BUILD_CONFIGURATION="Debug"
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
             ;;
         *)
-            echo "Unbekannte Option: $arg"
-            echo "Verwendung: ./build.sh [--install] [--run] [--release] [--debug]"
+            echo "Unknown option: $1"
+            usage
             exit 1
             ;;
     esac
 done
 
-verify_universal_app() {
-    local app_path="$1"
-    local app_name
-    local binary_path
-    local archs
-
-    app_name="$(basename "$app_path" .app)"
-    binary_path="$app_path/Contents/MacOS/$app_name"
-
-    if [ ! -f "$binary_path" ]; then
-        echo "❌ Konnte App-Binary nicht finden: $binary_path"
-        exit 1
-    fi
-
-    archs="$(lipo -archs "$binary_path" 2>/dev/null || true)"
-
-    if [[ -z "$archs" ]]; then
-        echo "❌ Konnte Architekturen nicht lesen: $binary_path"
-        file "$binary_path" 2>/dev/null || true
-        exit 1
-    fi
-
-    if [[ " $archs " != *" arm64 "* || " $archs " != *" x86_64 "* ]]; then
-        echo "❌ Build ist nicht universal. Erwartet: arm64 + x86_64"
-        echo "   Gefunden: $archs"
-        file "$binary_path" 2>/dev/null || true
-        exit 1
-    fi
-
-    echo "✅ Universal Binary verifiziert: $archs"
-}
-
-ensure_xcodebuild_available() {
-    if xcodebuild -version >/dev/null 2>&1; then
-        return
-    fi
-
-    local default_xcode="/Applications/Xcode.app/Contents/Developer"
-    if [ -d "$default_xcode" ]; then
-        export DEVELOPER_DIR="$default_xcode"
-        if xcodebuild -version >/dev/null 2>&1; then
-            echo "⚠️  Aktiver Developer-Pfad nutzt kein vollständiges Xcode. Verwende: $DEVELOPER_DIR"
-            return
-        fi
-    fi
-
-    echo "❌ xcodebuild ist nicht verfügbar."
-    echo "   Installiere Xcode und wähle es mit:"
-    echo "   sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"
+if [[ -z "$DEVICE_ID" || -z "$TEAM_ID" ]]; then
+    usage
     exit 1
-}
+fi
+
+if ! command -v xcodegen >/dev/null 2>&1; then
+    echo "xcodegen is required. Install with: brew install xcodegen"
+    exit 1
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$SCRIPT_DIR/BlitztextMac"
-PROJECT_FILE="$PROJECT_DIR/BlitztextMac.xcodeproj"
-DERIVED_DATA_PATH="$SCRIPT_DIR/.derivedData-blitztextmac-build"
-PACKAGE_CACHE_PATH="$SCRIPT_DIR/.swiftpm-cache"
-CLONED_PACKAGES_PATH="$SCRIPT_DIR/.swiftpm-packages"
-cd "$PROJECT_DIR"
+DERIVED_DATA_PATH="$SCRIPT_DIR/.derivedData-blitztext-ios"
 
-ensure_xcodebuild_available
+cd "$SCRIPT_DIR"
 
-if command -v xcodegen &> /dev/null; then
-    echo "⚙️  Generiere Xcode-Projekt ..."
-    xcodegen generate 2>&1
-elif [ -d "$PROJECT_FILE" ]; then
-    echo "⚠️  xcodegen nicht gefunden – nutze vorhandenes Xcode-Projekt."
-else
-    echo "❌ xcodegen fehlt."
-    echo "   Installiere xcodegen explizit mit:"
-    echo "   brew install xcodegen"
-    echo "   Oder stelle sicher, dass $PROJECT_FILE vorhanden ist."
-    exit 1
-fi
+echo "Generating Xcode project ..."
+xcodegen generate
 
-# Bauen
-echo "🔨 Baue Blitztext ..."
+echo "Building BlitztextiOS for device $DEVICE_ID ..."
 xcodebuild \
-    -project BlitztextMac.xcodeproj \
-    -scheme BlitztextMac \
-    -destination 'platform=macOS' \
+    -project BlitztextiOS.xcodeproj \
+    -scheme BlitztextiOS \
+    -destination "platform=iOS,id=$DEVICE_ID" \
     -configuration "$BUILD_CONFIGURATION" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
-    -packageCachePath "$PACKAGE_CACHE_PATH" \
-    -clonedSourcePackagesDirPath "$CLONED_PACKAGES_PATH" \
-    ONLY_ACTIVE_ARCH=NO \
-    ARCHS="$UNIVERSAL_ARCHS" \
-    CODE_SIGNING_ALLOWED=NO \
-    clean build
+    -allowProvisioningUpdates \
+    DEVELOPMENT_TEAM="$TEAM_ID" \
+    build
 
-# App finden
-APP_PATH="$DERIVED_DATA_PATH/Build/Products/$BUILD_CONFIGURATION/Blitztext.app"
+APP_PATH="$DERIVED_DATA_PATH/Build/Products/$BUILD_CONFIGURATION-iphoneos/Blitztext.app"
 
-if [ ! -d "$APP_PATH" ]; then
-    echo "❌ Build fehlgeschlagen – keine App gefunden."
+if [[ ! -d "$APP_PATH" ]]; then
+    echo "Build finished but app was not found at: $APP_PATH"
     exit 1
 fi
 
-xattr -cr "$APP_PATH" 2>/dev/null || true
-verify_universal_app "$APP_PATH"
+echo "Built app:"
+echo "  $APP_PATH"
 
-# Resources manuell ins Bundle kopieren (xcodegen kopiert sie nicht automatisch)
-echo "📋 Kopiere Resources ..."
-RESOURCES_DIR="$APP_PATH/Contents/Resources"
-mkdir -p "$RESOURCES_DIR"
-cp -f "$PROJECT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/" 2>/dev/null || true
-cp -f "$PROJECT_DIR/Resources/menubar_icon.png" "$RESOURCES_DIR/" 2>/dev/null || true
-cp -f "$PROJECT_DIR/Resources/menubar_icon@2x.png" "$RESOURCES_DIR/" 2>/dev/null || true
-
-# In Projektordner kopieren
-DEST="$SCRIPT_DIR/Blitztext.app"
-rm -rf "$DEST"
-cp -R "$APP_PATH" "$DEST"
-xattr -cr "$DEST" 2>/dev/null || true
-echo "🔏 Signiere lokale Development-App ad-hoc. Dieses Artefakt ist nicht notarisiert."
-codesign --force --sign - --options runtime --entitlements "$PROJECT_DIR/Resources/BlitztextMac.entitlements" "$DEST" 2>&1
-verify_universal_app "$DEST"
-
-RUN_TARGET="$DEST"
-
-if [ "$INSTALL_APP" = true ]; then
-    APPS_DIR="/Applications"
-    INSTALL_DEST="$APPS_DIR/Blitztext.app"
-    if [ ! -w "$APPS_DIR" ]; then
-        echo "❌ /Applications ist nicht beschreibbar."
-        echo "   Fuehre den Befehl mit passenden Rechten erneut aus oder ziehe die App manuell nach /Applications."
-        exit 1
-    fi
-    rm -rf "$INSTALL_DEST"
-    cp -R "$DEST" "$INSTALL_DEST"
-    xattr -cr "$INSTALL_DEST" 2>/dev/null || true
-    echo "🔏 Signiere lokale Development-App ad-hoc. Dieses Artefakt ist nicht notarisiert."
-    codesign --force --sign - --options runtime --entitlements "$PROJECT_DIR/Resources/BlitztextMac.entitlements" "$INSTALL_DEST" 2>&1
-    verify_universal_app "$INSTALL_DEST"
-    RUN_TARGET="$INSTALL_DEST"
-fi
-
-echo ""
-echo "✅ Fertig! App liegt unter:"
-echo "   $DEST"
-if [ "$INSTALL_APP" = true ]; then
-    echo "   $RUN_TARGET"
-fi
-echo ""
-echo "Build-Typ: $BUILD_CONFIGURATION"
-echo "Architekturen: $UNIVERSAL_ARCHS"
-echo "Kompatibel: Apple Silicon + Intel (macOS 14+)"
-echo ""
-echo "Naechste Schritte:"
-echo "1. App starten"
-echo "2. Mikrofon erlauben"
-echo "3. Fuer direktes Einfuegen zusaetzlich Bedienungshilfen erlauben"
-echo "4. In Blitztext deinen eigenen OpenAI API Key eintragen"
-echo "5. Loslegen und bei Bedarf im Code weiterbauen"
-echo ""
-
-# Optional: direkt starten
-if [ "$RUN_AFTER" = true ]; then
-    echo "🚀 Starte Blitztext ..."
-    open "$RUN_TARGET"
+if [[ "$INSTALL_APP" == true ]]; then
+    echo "Installing app to device ..."
+    xcrun devicectl device install app --device "$DEVICE_ID" "$APP_PATH"
 fi

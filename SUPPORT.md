@@ -1,13 +1,15 @@
 # Support
 
-Blitztext App is an experimental preview. There is no service-level agreement, paid support channel, or guarantee that issues will be fixed.
+Blitztext iOS is an experimental preview. There is no service-level agreement, paid
+support channel, or guarantee that issues will be fixed.
 
 ## Before Asking For Help
 
-- Make sure you can build the app with `./build.sh --debug`.
+- Make sure you can generate the project with `xcodegen generate`.
 - Check that your OpenAI API key is entered in the app settings.
-- Confirm that macOS microphone permission is granted.
-- Grant Accessibility permission if you expect automatic paste into other apps.
+- Confirm that iOS microphone permission is granted.
+- Confirm that Full Access is enabled for the Blitztext keyboard.
+- Check that app and keyboard use the same keychain access group.
 - Read [docs/privacy.md](docs/privacy.md) before testing with sensitive content.
 
 ## Where To Ask
@@ -22,4 +24,5 @@ Please do not post:
 - confidential transcripts
 - screenshots that show sensitive content
 
-For security-sensitive reports, follow [SECURITY.md](SECURITY.md) instead of opening a public issue.
+For security-sensitive reports, follow [SECURITY.md](SECURITY.md) instead of opening a
+public issue.

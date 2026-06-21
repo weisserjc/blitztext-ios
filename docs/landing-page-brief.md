@@ -1,22 +1,21 @@
 # Landing Page Brief
 
-Domain: `blitztext.app`
-
-Goal: a very small landing page for an experimental open-source macOS and iOS preview.
+Goal: a very small landing page for an experimental open-source iOS dictation preview.
 
 ## Hero
 
 Headline:
 
-> Blitztext Preview
+> Blitztext iOS
 
 Subline:
 
-> Speak your thoughts. Turn them into text, cleaner writing, or calmer messages.
+> Whisper-style dictation from a custom iPhone keyboard.
 
 Body:
 
-> An experimental open-source speech-to-text app for macOS and iOS. Not finished, not hosted, not plug-and-play. Built to learn from, fork, and improve.
+> An experimental open-source iOS app and keyboard extension. Bring your own OpenAI API
+> key. No hosted backend, no App Store release, no production claims.
 
 Primary CTA:
 
@@ -26,58 +25,40 @@ Secondary CTA:
 
 > Read setup guide
 
-Small line:
-
-> Bring your own OpenAI API key. Optional local transcription. No hosted Blitztext backend.
-
 ## Sections
 
 1. What it does
-   - Dictate
-   - Improve
-   - Calm down
-   - Add emojis
+   - Switch to the Blitztext keyboard
+   - Dictate in the Blitztext app
+   - Choose Wörtlich or Verbessert
+   - Insert the prepared text back into the active field
 
 2. How it works
-   - Build the app locally
-   - Paste your own OpenAI API key
-   - On macOS: press a hotkey and speak
-   - On iOS: switch to the Blitztext keyboard and dictate
-   - Get text back where you were typing
+   - iOS keyboards cannot reliably record the microphone
+   - the keyboard opens the container app for recording
+   - app and keyboard exchange text through the shared keychain
+   - no custom backend
 
 3. Open-source preview
-   - macOS app plus experimental iOS keyboard/app
+   - iOS app plus keyboard extension
    - MIT License
    - experimental
    - no warranty
-   - optional local transcription with user-installed WhisperKit models
 
 4. Privacy, plainly
-   - online workflows send audio and text to OpenAI
-   - secure local mode keeps transcription on device
-   - no public Blitztext backend
-   - rewriting still uses OpenAI
+   - audio and text go directly to OpenAI
+   - API key is stored in the iOS Keychain
+   - keyboard reads prepared text from shared keychain, not clipboard
    - do your own review before sensitive use
-
-5. Roadmap
-   - easier setup
-   - signed releases
-   - local transcription experiments
-   - clearer setup and security docs
-   - community issues
 
 ## Do Not Promise
 
 - offline use
 - production readiness
 - hosted service
+- App Store availability
 - free usage without API costs
 - no data leaves the device
 - guaranteed support
-- App Store distribution
 - bundled local models
 - local rewriting
-
-## Visual Direction
-
-Use a real macOS screenshot or short demo GIF. Keep the page calm, sparse, and honest. Avoid fake metrics, oversized SaaS claims, and corporate origin story.

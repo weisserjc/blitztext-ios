@@ -14,13 +14,11 @@ build/
 .DS_Store
 
 # Local app artifacts
-Blitztext.app
-Blitztext *.app/
+*.app/
 .swiftpm-cache/
 .swiftpm-packages/
 .xcode-home/
 dist/
-models/
 *.mlmodel
 *.mlmodelc/
 *.mlpackage/

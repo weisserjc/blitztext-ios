@@ -47,12 +47,12 @@ geteilt.
 
 ## Build & Installation
 
-Die iOS-Targets sind in `BlitztextMac/project.yml` (xcodegen) definiert. Auf ein
+Die iOS-Targets sind in `project.yml` (XcodeGen) definiert. Auf ein
 angeschlossenes Gerät bauen/installieren:
 
 ```
-cd BlitztextMac && xcodegen generate
-xcodebuild -project BlitztextMac.xcodeproj -scheme BlitztextiOS -configuration Debug \
+xcodegen generate
+xcodebuild -project BlitztextiOS.xcodeproj -scheme BlitztextiOS -configuration Debug \
   -destination 'platform=iOS,id=<DEVICE_ID>' -derivedDataPath /tmp/blitztext-ios-dd \
   -allowProvisioningUpdates DEVELOPMENT_TEAM=<TEAM_ID> build
 xcrun devicectl device install app --device <DEVICE_ID> \

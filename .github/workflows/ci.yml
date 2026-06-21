@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  build-macos:
-    name: Build macOS app
+  build-ios:
+    name: Build iOS app
     runs-on: macos-14
     timeout-minutes: 30
 
@@ -48,5 +48,14 @@ jobs:
             brew install xcodegen
           fi
 
+      - name: Generate project
+        run: xcodegen generate
+
       - name: Build
-        run: ./build.sh --debug
+        run: |
+          xcodebuild \
+            -project BlitztextiOS.xcodeproj \
+            -scheme BlitztextiOS \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
